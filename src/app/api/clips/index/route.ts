@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         tags: tags?.length
           ? {
               connectOrCreate: tags.map((tagName: string) => ({
-                where: { slug: tagName.toLowerCase().replace(/\s+/g, "-") },
+                where: { name: tagName },
                 create: {
                   name: tagName,
                   slug: tagName.toLowerCase().replace(/\s+/g, "-"),
