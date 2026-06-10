@@ -78,8 +78,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(clip, { status: 201 });
   } catch (error) {
     console.error("Upload complete error:", error);
+    const message = error instanceof Error ? error.message : "Erro ao finalizar upload";
     return NextResponse.json(
-      { message: "Erro ao finalizar upload" },
+      { message },
       { status: 500 }
     );
   }
