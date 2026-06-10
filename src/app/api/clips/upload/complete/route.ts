@@ -24,9 +24,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log("Upload complete body:", body);
     const { uploadId, r2Key, title, tags, duration } = body;
 
     if (!uploadId || !r2Key || !title) {
+      console.log("Missing fields:", { uploadId, r2Key, title });
       return NextResponse.json(
         { message: "uploadId, r2Key e title sao obrigatorios" },
         { status: 400 }
