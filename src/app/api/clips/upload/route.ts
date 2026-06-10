@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (max 4MB - Vercel Hobby limit)
-    const MAX_SIZE = 4 * 1024 * 1024;
+    // Validate file size (max 4.5MB - Vercel Hobby limit)
+    const MAX_SIZE = 4.5 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
         { message: "Arquivo muito grande. Maximo 4MB no plano Hobby do Vercel" },

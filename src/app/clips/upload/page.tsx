@@ -105,8 +105,8 @@ export default function UploadClipPage() {
       return;
     }
 
-    if (file.size > 4 * 1024 * 1024) {
-      setState((s) => ({ ...s, error: "Arquivo muito grande. Maximo 4MB" }));
+    if (file.size > 4.5 * 1024 * 1024) {
+      setState((s) => ({ ...s, error: "Arquivo muito grande. Maximo 4.5MB" }));
       return;
     }
 
@@ -317,7 +317,7 @@ export default function UploadClipPage() {
                 ou clique para selecionar
               </p>
               <p className="font-mono text-xs text-muted-foreground">
-                MP4, WebM ou MOV • Maximo 4MB • Maximo 30 segundos
+                MP4, WebM ou MOV • Maximo 4.5MB • Maximo 30 segundos
               </p>
               <input
                 ref={fileInputRef}
