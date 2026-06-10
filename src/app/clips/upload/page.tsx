@@ -197,7 +197,7 @@ export default function UploadClipPage() {
 
         xhr.onerror = () => reject(new Error("Erro de conexao"));
         xhr.open("PUT", presignedUrl);
-        xhr.setRequestHeader("Content-Type", state.file.type);
+        xhr.setRequestHeader("Content-Type", state.file!.type);
         xhr.send(state.file);
       });
 
