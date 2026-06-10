@@ -110,7 +110,7 @@ export default function LoginPage() {
                 Entrar com Discord
               </button>
 
-              <div className="relative">
+              {/* <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-border" />
                 </div>
@@ -162,7 +162,7 @@ export default function LoginPage() {
                 <Link href="/register" className="text-primary hover:underline">
                   ./register.sh
                 </Link>
-              </p>
+              </p> */}
             </form>
           </div>
         </div>

@@ -127,12 +127,12 @@ export default async function ArticlePage({ params }: PageProps) {
         <footer className="mt-12 border-t border-border pt-8">
           <div className="flex items-center justify-between">
             <DeleteArticleButton articleId={article.id} articleSlug={article.slug} authorId={article.author.id} />
-            <Link
+            {/* <Link
               href={`/wiki/${article.slug}/history`}
               className="font-mono text-sm text-muted-foreground hover:text-primary"
             >
               ver historico →
-            </Link>
+            </Link> */}
           </div>
         </footer>
       </article>

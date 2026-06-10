@@ -64,13 +64,13 @@ function UserDropdown({ onClose }: { onClose: () => void }) {
         >
           Entrar
         </Link>
-        <Link
+        {/* <Link
           href="/register"
           className="font-mono block px-4 py-2.5 text-sm text-primary transition-colors hover:bg-accent rounded-b-lg"
           onClick={onClose}
         >
           Cadastrar
-        </Link>
+        </Link> */}
       </>
     );
   }
@@ -81,13 +81,13 @@ function UserDropdown({ onClose }: { onClose: () => void }) {
         <p className="font-mono text-sm text-foreground truncate">{user.name}</p>
         <p className="font-mono text-xs text-muted-foreground truncate">{user.email}</p>
       </div>
-      <Link
+      {/* <Link
         href="/awards"
         className="font-mono block px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         onClick={onClose}
       >
         ~/Awards
-      </Link>
+      </Link> */}
       <button
         onClick={handleLogout}
         className="font-mono flex w-full items-center gap-2 px-4 py-2.5 text-sm text-destructive transition-colors hover:bg-accent rounded-b-lg"

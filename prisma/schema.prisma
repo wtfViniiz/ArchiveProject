@@ -20,15 +20,18 @@ model User {
   updatedAt    DateTime  @updatedAt
   lastLoginAt  DateTime?
 
-  articles     Article[]
-  posts        Post[]
-  comments     Comment[]
-  likes        Like[]
-  revisions    Revision[]
-  clips        Clip[]
-  memories     Memory[]
-  sessions     Session[]
-  userAwards   UserAward[]
+  articles      Article[]
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  revisions     Revision[]
+  clips         Clip[]
+  memories      Memory[]
+  sessions      Session[]
+  userAwards    UserAward[]
+  clipAwards    ClipAward[]
+  clipFavorites ClipFavorite[]
+  uploadQueue   UploadQueue[]
 
   @@index([email])
 }
@@ -148,22 +151,29 @@ model Comment {
 
 model Clip {
   id                String       @id @default(uuid())
-  discordMessageId  String       @unique
-  discordChannelId  String
+  discordMessageId  String?      @unique
+  discordChannelId  String?
   title             String?
   description       String?
-  discordUserId     String
-  discordUserName   String
+  discordUserId     String?
+  discordUserName   String?
   discordUserAvatar String?
   videoUrl          String
+  originalUrl       String?
+  compressedUrl     String?
   thumbnailUrl      String?
+  spriteFrames      String[]     @default([])
+  fileSize          Int?
+  resolution        String?
   duration          Int?
   category          ClipCategory @default(OTHER)
-  createdAt         DateTime
+  createdAt         DateTime     @default(now())
   indexedAt         DateTime     @default(now())
   likeCount         Int          @default(0)
   commentCount      Int          @default(0)
-  isApproved        Boolean      @default(false)
+  awardCount        Int          @default(0)
+  isApproved        Boolean      @default(true)
+  processingStatus  String       @default("completed")
 
   author   User?     @relation(fields: [authorId], references: [id])
   authorId String?
@@ -171,11 +181,14 @@ model Clip {
   likes    Like[]
   tags     Tag[]
   memories Memory[]
+  awards   ClipAward[]
+  favorites ClipFavorite[]
 
   @@index([discordMessageId])
   @@index([discordUserId])
   @@index([isApproved])
   @@index([createdAt])
+  @@index([processingStatus])
 }
 
 enum ClipCategory {
@@ -280,4 +293,52 @@ model UserAward {
   @@unique([userId, awardId])
   @@index([userId])
   @@index([awardId])
+}
+
+model ClipAward {
+  id        String   @id @default(uuid())
+  clipId    String
+  userId    String
+  awardType String
+  awardedAt DateTime @default(now())
+
+  clip Clip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clipId, userId, awardType])
+  @@index([clipId])
+  @@index([userId])
+  @@index([awardType])
+}
+
+model ClipFavorite {
+  id        String   @id @default(uuid())
+  clipId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  clip Clip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clipId, userId])
+  @@index([clipId])
+  @@index([userId])
+}
+
+model UploadQueue {
+  id           String   @id @default(uuid())
+  userId       String
+  fileName     String
+  fileSize     Int
+  r2Key        String?
+  status       String   @default("pending")
+  progress     Int      @default(0)
+  errorMessage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
 }
