@@ -4,6 +4,22 @@ import './dot-field.css';
 
 const TWO_PI = Math.PI * 2;
 
+interface DotFieldProps {
+  dotRadius?: number;
+  dotSpacing?: number;
+  cursorRadius?: number;
+  cursorForce?: number;
+  bulgeOnly?: boolean;
+  bulgeStrength?: number;
+  glowRadius?: number;
+  sparkle?: boolean;
+  waveAmplitude?: number;
+  gradientFrom?: string;
+  gradientTo?: string;
+  glowColor?: string;
+  [key: string]: unknown;
+}
+
 const DotField = memo(({
   dotRadius = 1.5,
   dotSpacing = 14,
@@ -18,7 +34,7 @@ const DotField = memo(({
   gradientTo = 'rgba(180, 151, 207, 0.25)',
   glowColor = '#120F17',
   ...rest
-}) => {
+}: DotFieldProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const glowRef = useRef<SVGCircleElement>(null);
@@ -28,7 +44,18 @@ const DotField = memo(({
   const sizeRef = useRef({ w: 0, h: 0, offsetX: 0, offsetY: 0 });
   const glowOpacity = useRef(0);
   const engagement = useRef(0);
-  const propsRef = useRef({});
+  const propsRef = useRef({
+    dotRadius: 1.5,
+    dotSpacing: 14,
+    cursorRadius: 500,
+    cursorForce: 0.1,
+    bulgeOnly: true,
+    bulgeStrength: 67,
+    sparkle: false,
+    waveAmplitude: 0,
+    gradientFrom: 'rgba(168, 85, 247, 0.35)',
+    gradientTo: 'rgba(180, 151, 207, 0.25)',
+  });
   propsRef.current = { dotRadius, dotSpacing, cursorRadius, cursorForce, bulgeOnly, bulgeStrength, sparkle, waveAmplitude, gradientFrom, gradientTo };
   const rebuildRef = useRef<(() => void) | null>(null);
   const glowIdRef = useRef(`dot-field-glow-${Math.random().toString(36).slice(2, 9)}`);
@@ -47,7 +74,8 @@ const DotField = memo(({
     }
 
     function doResize() {
-      const rect = canvas.parentElement!.getBoundingClientRect();
+      if (!canvas || !canvas.parentElement) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
       const w = rect.width;
       const h = rect.height;
 
@@ -69,7 +97,7 @@ const DotField = memo(({
 
     function buildDots(w: number, h: number) {
       const p = propsRef.current;
-      const step = p.dotRadius + p.dotSpacing;
+      const step = (p.dotRadius || 1.5) + (p.dotSpacing || 14);
       const cols = Math.floor(w / step);
       const rows = Math.floor(h / step);
       const padX = (w % step) / 2;
@@ -133,8 +161,8 @@ const DotField = memo(({
       ctx!.clearRect(0, 0, w, h);
 
       const grad = ctx!.createLinearGradient(0, 0, w, h);
-      grad.addColorStop(0, p.gradientFrom);
-      grad.addColorStop(1, p.gradientTo);
+      grad.addColorStop(0, p.gradientFrom || 'rgba(168, 85, 247, 0.35)');
+      grad.addColorStop(1, p.gradientTo || 'rgba(180, 151, 207, 0.25)');
       ctx!.fillStyle = grad;
 
       const cr = p.cursorRadius;

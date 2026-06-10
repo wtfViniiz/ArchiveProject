@@ -13,10 +13,10 @@ const getAttr = (distance: number, maxDist: number, minVal: number, maxVal: numb
 
 const debounce = (func: () => void, delay: number) => {
   let timeoutId: ReturnType<typeof setTimeout>;
-  return (...args: unknown[]) => {
+  return (...args: []) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => {
-      func.apply(null, args);
+      func();
     }, delay);
   };
 };

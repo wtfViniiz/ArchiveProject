@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+
+async function getUser(request: NextRequest) {
+  const token = request.cookies.get("session_token")?.value;
+  if (!token) return null;
+
+  const session = await prisma.session.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!session || session.expiresAt < new Date()) return null;
+  return session.user;
+}
 
 export async function GET() {
   try {
@@ -24,12 +36,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    const user = await getUser(request);
 
-    if (!session) {
-      return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ message: "Nao autenticado" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -37,21 +47,21 @@ export async function POST(request: NextRequest) {
 
     if (!content || content.length < 10) {
       return NextResponse.json(
-        { message: "Conteúdo deve ter pelo menos 10 caracteres" },
+        { message: "Conteudo deve ter pelo menos 10 caracteres" },
         { status: 400 }
       );
     }
 
     if (content.length > 5000) {
       return NextResponse.json(
-        { message: "Conteúdo muito longo (máximo 5000 caracteres)" },
+        { message: "Conteudo muito longo (maximo 5000 caracteres)" },
         { status: 400 }
       );
     }
 
     if (images && images.length > 5) {
       return NextResponse.json(
-        { message: "Máximo de 5 imagens" },
+        { message: "Maximo de 5 imagens" },
         { status: 400 }
       );
     }
@@ -59,7 +69,7 @@ export async function POST(request: NextRequest) {
     const post = await prisma.post.create({
       data: {
         content,
-        authorId: session.user.id,
+        authorId: user.id,
         images: images || [],
         links: links || [],
       },

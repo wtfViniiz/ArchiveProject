@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+
+async function getUser(request: NextRequest) {
+  const token = request.cookies.get("session_token")?.value;
+  if (!token) return null;
+
+  const session = await prisma.session.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!session || session.expiresAt < new Date()) return null;
+  return session.user;
+}
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -24,7 +36,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     });
 
     if (!post) {
-      return NextResponse.json({ message: "Post não encontrado" }, { status: 404 });
+      return NextResponse.json({ message: "Post nao encontrado" }, { status: 404 });
     }
 
     return NextResponse.json(post);
@@ -40,27 +52,25 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 export async function PUT(request: NextRequest, { params }: RouteContext) {
   try {
     const { id } = await params;
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    const user = await getUser(request);
 
-    if (!session) {
-      return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ message: "Nao autenticado" }, { status: 401 });
     }
 
     const post = await prisma.post.findUnique({ where: { id } });
     if (!post) {
-      return NextResponse.json({ message: "Post não encontrado" }, { status: 404 });
+      return NextResponse.json({ message: "Post nao encontrado" }, { status: 404 });
     }
 
-    if (post.authorId !== session.user.id) {
-      return NextResponse.json({ message: "Sem permissão" }, { status: 403 });
+    if (post.authorId !== user.id) {
+      return NextResponse.json({ message: "Sem permissao" }, { status: 403 });
     }
 
     const hoursSinceCreation = (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60);
     if (hoursSinceCreation > 24) {
       return NextResponse.json(
-        { message: "Post só pode ser editado até 24h após criação" },
+        { message: "Post so pode ser editado ate 24h apos criacao" },
         { status: 403 }
       );
     }
@@ -93,21 +103,19 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
     const { id } = await params;
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    const user = await getUser(request);
 
-    if (!session) {
-      return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ message: "Nao autenticado" }, { status: 401 });
     }
 
     const post = await prisma.post.findUnique({ where: { id } });
     if (!post) {
-      return NextResponse.json({ message: "Post não encontrado" }, { status: 404 });
+      return NextResponse.json({ message: "Post nao encontrado" }, { status: 404 });
     }
 
-    if (post.authorId !== session.user.id) {
-      return NextResponse.json({ message: "Sem permissão" }, { status: 403 });
+    if (post.authorId !== user.id) {
+      return NextResponse.json({ message: "Sem permissao" }, { status: 403 });
     }
 
     await prisma.post.delete({ where: { id } });

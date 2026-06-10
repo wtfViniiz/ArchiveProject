@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+
+async function getUser(request: NextRequest) {
+  const token = request.cookies.get("session_token")?.value;
+  if (!token) return null;
+
+  const session = await prisma.session.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!session || session.expiresAt < new Date()) return null;
+  return session.user;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    const user = await getUser(request);
 
-    if (!session) {
-      return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ message: "Nao autenticado" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -22,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const where: Record<string, string> = { userId: session.user.id };
+    const where: Record<string, string> = { userId: user.id };
     if (postId) where.postId = postId;
     if (clipId) where.clipId = clipId;
     if (articleId) where.articleId = articleId;
@@ -47,10 +57,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ liked: false });
     }
 
-    const likeData: Record<string, string> = { userId: session.user.id };
-    if (postId) likeData.postId = postId;
-    if (clipId) likeData.clipId = clipId;
-    if (articleId) likeData.articleId = articleId;
+    const likeData = {
+      userId: user.id,
+      postId: postId || undefined,
+      clipId: clipId || undefined,
+      articleId: articleId || undefined,
+    };
 
     await prisma.like.create({ data: likeData });
 

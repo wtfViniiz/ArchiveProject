@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+
+async function getUser(request: NextRequest) {
+  const token = request.cookies.get("session_token")?.value;
+  if (!token) return null;
+
+  const session = await prisma.session.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!session || session.expiresAt < new Date()) return null;
+  return session.user;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
+    const user = await getUser(request);
 
-    if (!session) {
-      return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ message: "Nao autenticado" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -24,14 +34,14 @@ export async function POST(request: NextRequest) {
 
     if (!content || content.length < 5) {
       return NextResponse.json(
-        { message: "Comentário deve ter pelo menos 5 caracteres" },
+        { message: "Comentario deve ter pelo menos 5 caracteres" },
         { status: 400 }
       );
     }
 
     if (content.length > 2000) {
       return NextResponse.json(
-        { message: "Comentário muito longo (máximo 2000 caracteres)" },
+        { message: "Comentario muito longo (maximo 2000 caracteres)" },
         { status: 400 }
       );
     }
@@ -43,27 +53,26 @@ export async function POST(request: NextRequest) {
 
       if (!parentComment) {
         return NextResponse.json(
-          { message: "Comentário pai não encontrado" },
+          { message: "Comentario pai nao encontrado" },
           { status: 404 }
         );
       }
 
       if (parentComment.parentId) {
         return NextResponse.json(
-          { message: "Máximo de 2 níveis de aninhamento" },
+          { message: "Maximo de 2 niveis de aninhamento" },
           { status: 400 }
         );
       }
     }
 
-    const commentData: Record<string, string> = {
+    const commentData = {
       content,
-      userId: session.user.id,
+      userId: user.id,
+      postId: postId || undefined,
+      clipId: clipId || undefined,
+      parentId: parentId || undefined,
     };
-
-    if (postId) commentData.postId = postId;
-    if (clipId) commentData.clipId = clipId;
-    if (parentId) commentData.parentId = parentId;
 
     const comment = await prisma.comment.create({
       data: commentData,
@@ -88,7 +97,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Create comment error:", error);
     return NextResponse.json(
-      { message: "Erro ao criar comentário" },
+      { message: "Erro ao criar comentario" },
       { status: 500 }
     );
   }

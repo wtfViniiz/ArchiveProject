@@ -5,7 +5,7 @@ import './circular-gallery.css';
 
 function debounce(func: (...args: unknown[]) => void, wait: number) {
   let timeout: ReturnType<typeof setTimeout>;
-  return function (...args: unknown[]) {
+  return function (this: unknown, ...args: unknown[]) {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), wait);
   };
@@ -108,7 +108,8 @@ function getFontSize(font: string) {
   return match ? parseInt(match[1], 10) : 30;
 }
 
-function createTextTexture(gl: WebGLRenderingContext, text: string, font = 'bold 30px monospace', color = 'black') {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createTextTexture(gl: any, text: string, font = 'bold 30px monospace', color = 'black') {
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d')!;
   context.font = font;
@@ -129,18 +130,22 @@ function createTextTexture(gl: WebGLRenderingContext, text: string, font = 'bold
 }
 
 interface TitleProps {
-  gl: WebGLRenderingContext;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  gl: any;
   plane: Mesh;
-  renderer: { gl: WebGLRenderingContext };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  renderer: { gl: any };
   text: string;
   textColor?: string;
   font?: string;
 }
 
 class Title {
-  gl: WebGLRenderingContext;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  gl: any;
   plane: Mesh;
-  renderer: { gl: WebGLRenderingContext };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  renderer: { gl: any };
   text: string;
   textColor: string;
   font: string;
@@ -197,11 +202,13 @@ class Title {
 
 interface MediaProps {
   geometry: Plane;
-  gl: WebGLRenderingContext;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  gl: any;
   image: string;
   index: number;
   length: number;
-  renderer: { gl: WebGLRenderingContext };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  renderer: { gl: any };
   scene: Transform;
   screen: { width: number; height: number };
   text: string;
@@ -215,11 +222,13 @@ interface MediaProps {
 class Media {
   extra = 0;
   geometry: Plane;
-  gl: WebGLRenderingContext;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  gl: any;
   image: string;
   index: number;
   length: number;
-  renderer: { gl: WebGLRenderingContext };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  renderer: { gl: any };
   scene: Transform;
   screen: { width: number; height: number };
   text: string;
@@ -422,13 +431,17 @@ class App {
   scrollSpeed: number;
   scroll: { ease: number; current: number; target: number; last: number };
   onCheckDebounce: () => void;
-  renderer!: Renderer;
-  gl!: WebGLRenderingContext;
-  camera!: Camera;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  renderer!: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  gl!: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  camera!: any;
   scene!: Transform;
   screen!: { width: number; height: number };
   viewport!: { width: number; height: number };
-  planeGeometry!: Plane;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  planeGeometry!: any;
   mediasImages!: GalleryItem[];
   medias!: Media[];
   isDown = false;
@@ -562,7 +575,6 @@ class App {
     this.boundOnTouchMove = this.onTouchMove.bind(this);
     this.boundOnTouchUp = this.onTouchUp.bind(this);
     window.addEventListener('resize', this.boundOnResize);
-    window.addEventListener('mousewheel', this.boundOnWheel);
     window.addEventListener('wheel', this.boundOnWheel);
     window.addEventListener('mousedown', this.boundOnTouchDown);
     window.addEventListener('mousemove', this.boundOnTouchMove);
@@ -575,7 +587,6 @@ class App {
   destroy() {
     window.cancelAnimationFrame(this.raf);
     window.removeEventListener('resize', this.boundOnResize);
-    window.removeEventListener('mousewheel', this.boundOnWheel);
     window.removeEventListener('wheel', this.boundOnWheel);
     window.removeEventListener('mousedown', this.boundOnTouchDown);
     window.removeEventListener('mousemove', this.boundOnTouchMove);

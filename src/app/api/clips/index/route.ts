@@ -84,7 +84,8 @@ export async function POST(request: NextRequest) {
         duration: duration || null,
         category: category || "OTHER",
         authorId: user.id,
-        isApproved: false, // Needs admin approval
+        isApproved: false,
+        createdAt: new Date(),
         tags: tags?.length
           ? {
               connectOrCreate: tags.map((tagName: string) => ({
