@@ -105,8 +105,8 @@ export default function UploadClipPage() {
       return;
     }
 
-    if (file.size > 4.5 * 1024 * 1024) {
-      setState((s) => ({ ...s, error: "Arquivo muito grande. Maximo 4.5MB" }));
+    if (file.size > 300 * 1024 * 1024) {
+      setState((s) => ({ ...s, error: "Arquivo muito grande. Maximo 300MB" }));
       return;
     }
 
@@ -158,16 +158,25 @@ export default function UploadClipPage() {
     setState((s) => ({ ...s, uploading: true, progress: 0, error: null, success: false }));
 
     try {
-      const selectedTagNames = tags
-        .filter((t) => state.selectedTags.includes(t.id))
-        .map((t) => t.name);
+      // Step 1: Get presigned URL
+      const presignedResponse = await fetch("/api/clips/upload/presigned", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: state.file.name,
+          fileSize: state.file.size,
+          contentType: state.file.type,
+        }),
+      });
 
-      const formData = new FormData();
-      formData.append("file", state.file);
-      formData.append("title", state.title);
-      formData.append("tags", JSON.stringify(selectedTagNames));
-      formData.append("duration", String(state.trimEnd - state.trimStart));
+      if (!presignedResponse.ok) {
+        const error = await presignedResponse.json();
+        throw new Error(error.message);
+      }
 
+      const { uploadId, presignedUrl, r2Key } = await presignedResponse.json();
+
+      // Step 2: Upload directly to R2
       const xhr = new XMLHttpRequest();
 
       await new Promise<void>((resolve, reject) => {
@@ -182,21 +191,41 @@ export default function UploadClipPage() {
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve();
           } else {
-            try {
-              const error = JSON.parse(xhr.responseText);
-              reject(new Error(error.message));
-            } catch {
-              reject(new Error("Erro ao fazer upload"));
-            }
+            reject(new Error("Erro ao fazer upload pro R2"));
           }
         };
 
-        xhr.onerror = () => reject(new Error("Erro ao fazer upload"));
-        xhr.open("POST", "/api/clips/upload");
-        xhr.send(formData);
+        xhr.onerror = () => reject(new Error("Erro de conexao"));
+        xhr.open("PUT", presignedUrl);
+        xhr.setRequestHeader("Content-Type", state.file.type);
+        xhr.send(state.file);
       });
 
-      const clip = JSON.parse(xhr.responseText);
+      setState((s) => ({ ...s, uploading: false, progress: 100 }));
+
+      // Step 3: Notify server upload is complete
+      const selectedTagNames = tags
+        .filter((t) => state.selectedTags.includes(t.id))
+        .map((t) => t.name);
+
+      const completeResponse = await fetch("/api/clips/upload/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadId,
+          r2Key,
+          title: state.title,
+          tags: selectedTagNames,
+          duration: state.trimEnd - state.trimStart,
+        }),
+      });
+
+      if (!completeResponse.ok) {
+        const error = await completeResponse.json();
+        throw new Error(error.message);
+      }
+
+      const clip = await completeResponse.json();
       setState((s) => ({
         ...s,
         uploading: false,
@@ -317,7 +346,7 @@ export default function UploadClipPage() {
                 ou clique para selecionar
               </p>
               <p className="font-mono text-xs text-muted-foreground">
-                MP4, WebM ou MOV • Maximo 4.5MB • Maximo 30 segundos
+                MP4, WebM ou MOV • Maximo 300MB • Maximo 30 segundos
               </p>
               <input
                 ref={fileInputRef}
